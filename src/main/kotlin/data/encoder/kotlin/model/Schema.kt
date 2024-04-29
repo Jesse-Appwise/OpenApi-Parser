@@ -3,6 +3,7 @@ package data.encoder.kotlin.model
 import model.schema.Schema
 import util.isSnakeCase
 import util.snakeToCamelCase
+import util.toModelClassName
 import java.io.File
 
 /**
@@ -29,13 +30,14 @@ fun Schema.Types.toKotlinDefaultValue(): String {
  * @return The kotlin representation of the type for the given schema.
  */
 fun Schema.toKotlinType(knownObjectClassName: String? = null): String {
+
     return when (type) {
         Schema.Types.string -> "String"
         Schema.Types.number -> "Double"
         Schema.Types.integer -> "Int"
         Schema.Types.boolean -> "Boolean"
         Schema.Types.`object` -> knownObjectClassName ?: "Any"
-        Schema.Types.array -> "List<${items?.`$ref`?.split('/')?.lastOrNull()?.plus("Dto")}>"
+        Schema.Types.array -> "List<$knownObjectClassName>"
         else -> knownObjectClassName ?: "Any"
     }
 }
@@ -91,15 +93,26 @@ fun Schema.toKotlinClass(name: String): String {
     }
 }
 
-fun Schema.writeKotlinDtoClass(path: String, name: String) {
+fun Schema.writeKotlinSchemaClass(path: String, name: String) {
+
     val nestedProperties = properties.filter { it.value.type == Schema.Types.`object` }
 
-    val className = name.replaceFirstChar { it.uppercase() } + "Dto"
+    val isDto = !name.endsWith("response", ignoreCase = true) && !name.endsWith("request", ignoreCase = true)
+
+    var className = name.toModelClassName()
+
+    val actualPath = if (path.endsWith("/dto") && !isDto){
+        when {
+            name.endsWith("response") -> path.replace("/dto", "/response")
+            name.endsWith("request") -> path.replace("/dto", "/request")
+            else -> path
+        }
+    } else path
 
     val filePath = buildString {
-        append("$path/")
+        append("$actualPath/")
         if (nestedProperties.isNotEmpty()) {
-            append("$name/")
+            append("${name.lowercase()}/")
         }
         append("$className.kt")
     }
@@ -118,7 +131,7 @@ fun Schema.writeKotlinDtoClass(path: String, name: String) {
     file.writeText(content)
 
     properties.filter { it.value.type == Schema.Types.`object` }.forEach { (propertyName, schema) ->
-        schema.writeKotlinDtoClass("$path/$name", propertyName)
+        schema.writeKotlinSchemaClass("$actualPath/${name.lowercase()}", propertyName)
     }
 }
 
@@ -144,7 +157,8 @@ private fun StringBuilder.clazz(
 
     content?.let {
         appendLine("{")
-        append(it)
+        appendLine()
+        append(it.invoke(this))
         appendLine()
         appendLine("}")
     }

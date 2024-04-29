@@ -3,6 +3,7 @@ package data.encoder.kotlin.model
 import com.cesarferreira.pluralize.singularize
 import model.path.Operation
 import model.path.Path
+import util.toModelClassName
 
 fun Operation.toKotlinRetrofitServiceCall(
     method: Path.Method,
@@ -22,7 +23,7 @@ fun Operation.toKotlinRetrofitServiceCall(
     }
 
     val responseSchema = this.successResponse?.content?.applicationJson?.schema
-    val possibleResponseClass = responseSchema?.`$ref`?.split("/")?.lastOrNull()
+    val possibleResponseClass = responseSchema?.`$ref`?.split("/")?.lastOrNull()?.toModelClassName()
     builder.append("): Response<${responseSchema?.toKotlinType(possibleResponseClass)}>")
     return builder.toString()
 }

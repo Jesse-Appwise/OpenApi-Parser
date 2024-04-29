@@ -1,7 +1,7 @@
 package data.encoder.kotlin
 
 import com.cesarferreira.pluralize.singularize
-import data.encoder.kotlin.model.writeKotlinDtoClass
+import data.encoder.kotlin.model.writeKotlinSchemaClass
 import data.encoder.kotlin.model.writeKotlinRetrofitService
 import model.ApiDocumentation
 
@@ -27,7 +27,7 @@ class KotlinNetworkEncoder(
 
     private fun encodeModels() {
         documentation.components.schemas.forEach { (key, value) ->
-            value.writeKotlinDtoClass("$outputPath/model/dto", key)
+            value.writeKotlinSchemaClass("$outputPath/model/dto", key)
         }
     }
 
