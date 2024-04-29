@@ -7,9 +7,9 @@ import util.toModelClassName
 import java.io.File
 
 /**
- * Creates a kotlin representation of the default value for the given schema type.
+ * Converts the Schema.Types to their respective Kotlin default values.
  *
- * @return The default value for the given schema type.
+ * @return The Kotlin default value as a String.
  */
 fun Schema.Types.toKotlinDefaultValue(): String {
     return when (this) {
@@ -24,33 +24,42 @@ fun Schema.Types.toKotlinDefaultValue(): String {
 }
 
 /**
- * Creates a kotlin representation of the class type.
+ * Converts the Schema.Types to their respective Kotlin types.
  *
- * @param knownObjectClassName The name of the known object class.
- * @return The kotlin representation of the type for the given schema.
+ * @param knownObjectClassName The known object class name, if any.
+ * @return The Kotlin type as a String.
  */
 fun Schema.toKotlinType(knownObjectClassName: String? = null): String {
+
+    val objectType = knownObjectClassName ?: "Any"
 
     return when (type) {
         Schema.Types.string -> "String"
         Schema.Types.number -> "Double"
         Schema.Types.integer -> "Int"
         Schema.Types.boolean -> "Boolean"
-        Schema.Types.`object` -> knownObjectClassName ?: "Any"
-        Schema.Types.array -> "List<$knownObjectClassName>"
-        else -> knownObjectClassName ?: "Any"
+        Schema.Types.`object` -> objectType
+        Schema.Types.array -> "List<$objectType>"
+        else -> objectType
     }
 }
 
+/**
+ * Converts the inherited schemas to their respective Kotlin inheritance.
+ *
+ * @return The Kotlin inheritance as a String.
+ */
 fun Schema.toKotlinInheritance(): String {
+    if (inheritedSchemes.isEmpty()) return ""
+
     return inheritedSchemes.mapNotNull { it.`$ref`?.split('/')?.lastOrNull() }
         .joinToString(separator = ", ", postfix = "()")
 }
 
 /**
- * Creates a kotlin representation of the property.
+ * Converts the pair of property name and schema to a Kotlin property.
  *
- * @return The kotlin representation of the property.
+ * @return The Kotlin property as a String.
  */
 fun Pair<String, Schema>.toKotlinProperty(): String {
     val (name, schema) = this
@@ -60,17 +69,17 @@ fun Pair<String, Schema>.toKotlinProperty(): String {
 
     val serializeAnnotation = if (isSnakeCase) "@SerializedName(\"$name\") " else ""
 
-    val type = schema.toKotlinType(name.snakeToCamelCase().replaceFirstChar { it.uppercase() }.plus("Dto"))
+    val type = schema.toKotlinType(name.toModelClassName())
     val nullable = if (schema.type == Schema.Types.`object`) "?" else ""
 
     return "${serializeAnnotation}val $camelSafeName: $type$nullable = ${schema.type?.toKotlinDefaultValue()}"
 }
 
 /**
- * Creates a kotlin representation of the class.
+ * Converts the schema to a Kotlin class.
  *
  * @param name The name of the class.
- * @return
+ * @return The Kotlin class as a String.
  */
 fun Schema.toKotlinClass(name: String): String {
 
@@ -93,6 +102,12 @@ fun Schema.toKotlinClass(name: String): String {
     }
 }
 
+/**
+ * Writes the schema as a Kotlin class to a file.
+ *
+ * @param path The path where the file should be written.
+ * @param name The name of the class.
+ */
 fun Schema.writeKotlinSchemaClass(path: String, name: String) {
 
     val nestedProperties = properties.filter { it.value.type == Schema.Types.`object` }
@@ -135,14 +150,27 @@ fun Schema.writeKotlinSchemaClass(path: String, name: String) {
     }
 }
 
+/**
+ * Appends the schema's description to the StringBuilder.
+ *
+ * @param schema The schema whose description should be appended.
+ */
 private fun StringBuilder.description(schema: Schema) {
     schema.description?.let {
         appendLine("/**")
-        appendLine(" * $it")
-        appendLine(" */")
+        appendLine("* $it")
+        appendLine("*/")
     }
 }
 
+/**
+ * Appends a Kotlin class to the StringBuilder.
+ *
+ * @param name The name of the class.
+ * @param properties The properties of the class.
+ * @param inheritance The inheritance of the class.
+ * @param content The content of the class.
+ */
 private fun StringBuilder.clazz(
     name: String,
     properties: StringBuilder.() -> Unit,
@@ -164,6 +192,11 @@ private fun StringBuilder.clazz(
     }
 }
 
+/**
+ * Appends the schema's properties to the StringBuilder.
+ *
+ * @param schema The schema whose properties should be appended.
+ */
 private fun StringBuilder.properties(schema: Schema) {
     if (schema.properties.isNotEmpty()) {
         appendLine()
@@ -193,6 +226,11 @@ private fun StringBuilder.properties(schema: Schema) {
     }
 }
 
+/**
+ * Appends the schema's inheritance to the StringBuilder.
+ *
+ * @param schema The schema whose inheritance should be appended.
+ */
 private fun StringBuilder.inheritance(schema: Schema) {
     if (schema.inheritedSchemes.isNotEmpty()) {
         append(" : ")

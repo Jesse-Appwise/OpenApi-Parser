@@ -5,6 +5,10 @@
  * Learn more about Gradle by exploring our samples at https://docs.gradle.org/7.3.3/samples
  */
 
+tasks.test {
+    useJUnitPlatform()
+}
+
 plugins {
     kotlin("jvm") version "1.6.10"
 }
@@ -17,8 +21,12 @@ repositories {
 }
 
 dependencies {
-    implementation("com.github.cesarferreira:kotlin-pluralizer:1.0.0")
 
+    implementation("com.github.cesarferreira:kotlin-pluralizer:1.0.0")
     implementation("org.yaml:snakeyaml:1.29")
     implementation("com.github.beosign:snakeyaml-anno:1.3.0")
+
+    testImplementation("org.junit.jupiter:junit-jupiter-api:5.8.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-engine:5.8.2")
+    testImplementation("io.mockk:mockk:1.12.0")
 }
