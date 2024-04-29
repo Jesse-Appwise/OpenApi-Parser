@@ -17,6 +17,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.yaml:snakeyaml:1.29")
     implementation("com.github.cesarferreira:kotlin-pluralizer:1.0.0")
+
+    implementation("org.yaml:snakeyaml:1.29")
+    implementation("com.github.beosign:snakeyaml-anno:1.3.0")
 }

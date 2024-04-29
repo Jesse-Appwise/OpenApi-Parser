@@ -21,7 +21,7 @@ fun Operation.toKotlinRetrofitServiceCall(
         }
     }
 
-    val responseSchema = this.successResponse?.jsonResponseSchema
+    val responseSchema = this.successResponse?.content?.applicationJson?.schema
     val possibleResponseClass = responseSchema?.`$ref`?.split("/")?.lastOrNull()
     builder.append("): Response<${responseSchema?.toKotlinType(possibleResponseClass)}>")
     return builder.toString()

@@ -5,5 +5,9 @@ fun String.isSnakeCase(): Boolean {
 }
 
 fun String.snakeToCamelCase(): String {
-    return this.split('_').joinToString(separator = "") { it.replaceFirstChar { it.uppercase() } }.replaceFirstChar { it.lowercase() }
+    return removeCharToCamelCase('_')
+}
+
+fun String.removeCharToCamelCase(char: Char): String {
+    return this.split(char).joinToString(separator = "") { it.replaceFirstChar { it.uppercase() } }.replaceFirstChar { it.lowercase() }
 }

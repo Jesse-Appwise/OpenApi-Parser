@@ -35,7 +35,7 @@ fun Schema.toKotlinType(knownObjectClassName: String? = null): String {
         Schema.Types.integer -> "Int"
         Schema.Types.boolean -> "Boolean"
         Schema.Types.`object` -> knownObjectClassName ?: "Any"
-        Schema.Types.array -> "List<${items?.`$ref`?.split('/')?.lastOrNull()}>"
+        Schema.Types.array -> "List<${items?.`$ref`?.split('/')?.lastOrNull()?.plus("Dto")}>"
         else -> knownObjectClassName ?: "Any"
     }
 }
@@ -58,7 +58,7 @@ fun Pair<String, Schema>.toKotlinProperty(): String {
 
     val serializeAnnotation = if (isSnakeCase) "@SerializedName(\"$name\") " else ""
 
-    val type = schema.toKotlinType(name.replaceFirstChar { it.uppercase() })
+    val type = schema.toKotlinType(name.snakeToCamelCase().replaceFirstChar { it.uppercase() }.plus("Dto"))
     val nullable = if (schema.type == Schema.Types.`object`) "?" else ""
 
     return "${serializeAnnotation}val $camelSafeName: $type$nullable = ${schema.type?.toKotlinDefaultValue()}"
